@@ -4,7 +4,7 @@ import json
 from PIL import Image
 
 
-def compute_convolution(I, T, stride=2):
+def compute_convolution(I, T, stride=1):
     '''
     This function takes an image <I> and a template <T> (both numpy arrays)
     and returns a heatmap where each grid represents the output produced by
@@ -18,13 +18,13 @@ def compute_convolution(I, T, stride=2):
     template = T.flatten()
     template = normalize_image(template)
 
-    heatmap = [[0 for j in range(n_cols)] for i in range(n_rows)]
+    heatmap = np.zeros((n_rows, n_cols))
 
     for i in range(0, n_rows - m_rows, stride):
         for j in range(0, n_cols - m_cols, stride):
             image = I[i:i + m_rows, j:j + m_cols, :].flatten()
             image = normalize_image(image)
-            heatmap[i][j] = np.dot(image, template)
+            heatmap[i][j] = np.sum(image * template)
 
     return heatmap
 
@@ -39,48 +39,45 @@ def normalize_image(v):
     return v / norm
 
 
-def predict_boxes(heatmap):
+def predict_boxes(heatmap, I, T):
     '''
     This function takes heatmap and returns the bounding boxes and associated
     confidence scores.
     '''
 
-    heatmap = np.asarray(heatmap)
+    (n_rows, n_cols) = np.shape(heatmap)
+    (m_rows, m_cols, m_channels) = np.shape(T)
+
     output = []
 
-    threshold = 0.80
-    redlights = list(zip(*np.where(heatmap > threshold)))
+    threshold = 0.90
 
-    if len(redlights) <= 1:
-        return [0, 0, 0, 0, 0]
-
-    i = 1
-    widths = set()
-    heights = set()
-    confidence_scores = []
-    widths.add(redlights[0][0])
-    heights.add(redlights[0][1])
-    while (i < len(redlights)):
-        x, y = redlights[i]
-        if (x > max(widths) + 1 or x < min(widths) - 1) and (y > max(heights) + 1 or y < min(heights) - 1):
-            left = min(widths)
-            top = min(heights)
-            right = max(widths)
-            bottom = max(heights)
-            if (abs(left - right) > 3 and abs(top - bottom) > 3):
-                confidence_score = np.average(np.asarray(confidence_scores))
-                output.append([int(left), int(top), int(right), int(bottom) - int((int(bottom) - int(top)) * 2 / 3),
-                               confidence_score])
-            widths = set()
-            heights = set()
-            confidence_score = 0
-            widths.add(redlights[i][0])
-            heights.add(redlights[i][1])
-        else:
-            widths.add(x)
-            heights.add(y)
-            confidence_scores.append(heatmap[x][y])
+    i = 0
+    while i < n_rows - m_rows:
+        j = 0
+        while j < n_cols - m_cols:
+            if (heatmap[i, j] > threshold and I[i + int(m_rows / 2), j + int(m_cols / 2), 0] >= 220):
+                score = np.average(heatmap[i, j])
+                output.append([i, j, i + m_rows, j + m_cols, score])
+                i += m_rows
+                j += n_cols
+            else:
+                j += 1
         i += 1
+    return output
+
+
+def overlap(bounding_boxes):
+    bounding_boxes = sorted(bounding_boxes, key=lambda x: (x[0], x[1]))
+    output = [bounding_boxes[0]]
+
+    for i in range(1, len(bounding_boxes)):
+        t_prev, l_prev, b_prev, r_prev, score_prev = bounding_boxes[i - 1]
+        t_curr, l_curr, b_curr, r_curr, score_curr = bounding_boxes[i]
+        if (t_curr not in range(t_prev, b_prev) and b_curr not in range(t_prev, b_prev) and l_curr not in range(l_prev,
+                                                                                                                r_prev) and r_curr not in range(
+                l_prev, b_prev)):
+            output.append(bounding_boxes[i])
 
     return output
 
@@ -110,14 +107,14 @@ def detect_red_light_mf(I):
         T = Image.open(os.path.join(templates_path, template))
         T = np.asarray(T)
         heatmap = compute_convolution(I, T)
-        bounding_boxes = predict_boxes(heatmap)
-        output.extend(bounding_boxes)
+        bounding_boxes = predict_boxes(heatmap, I, T)
+        for box in bounding_boxes:
+            output.append(box)
 
-    for bounding_box in output:
-        left, top, right, bottom, score = bounding_box
-        if ((right - left) >= 1.5 * (bottom - top) or (bottom - top) >= 1.5 * (right - left)):
-            if bounding_box in output:
-                output.remove(bounding_box)
+    if len(output) > 5:
+        output = sorted(output, key=lambda element: element[4], reverse=True)[:5]
+    if output:
+        output = overlap(output)
 
     for i in range(len(output)):
         assert len(output[i]) == 5
@@ -140,14 +137,13 @@ preds_path = './predictions'
 os.makedirs(preds_path, exist_ok=True)  # create directory if needed
 
 # Set this parameter to True when you're done with algorithm development:
-done_tweaking = False
+done_tweaking = True
 
 '''
 Make predictions on the training set.
 '''
 preds_train = {}
 for i in range(len(file_names_train)):
-    # for i in range(2):
     if (i % 5 == 0):
         print('Detection training completed for : {}/{} images'.format(i, len(file_names_train)))
     # read image using PIL:
