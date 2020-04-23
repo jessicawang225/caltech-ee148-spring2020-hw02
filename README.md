@@ -2,7 +2,7 @@
 
 #### ./annotations: 
 directory containing the students' annotations
-#### ./plots: 
+#### ./pr_curve: 
 directory containing plots of different PR curves
 #### ./predictions: 
 directory containing preds_train.json and preds_test.json
