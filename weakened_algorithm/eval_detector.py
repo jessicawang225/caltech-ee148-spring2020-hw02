@@ -139,7 +139,7 @@ for iou_thr in iou_thrs:
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.title('Train PR Curve')
-fig.legend(['iou_thrs = 0.25', 'iou_thrs = 0.50', 'iou_thrs = 0.75'], loc=(0.6, 0.2))
+fig.legend(['iou_thrs = 0.25', 'iou_thrs = 0.50', 'iou_thrs = 0.75'], loc=(0.6, 0.65))
 fig.savefig('{}/PR_curve_train.png'.format(plots_path))
 
 if done_tweaking:
@@ -169,5 +169,5 @@ if done_tweaking:
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Test PR Curve')
-    fig.legend(['iou_thrs = 0.25', 'iou_thrs = 0.50', 'iou_thrs = 0.75'], loc=(0.6, 0.2))
+    fig.legend(['iou_thrs = 0.25', 'iou_thrs = 0.50', 'iou_thrs = 0.75'], loc=(0.6, 0.65))
     fig.savefig('{}/PR_curve_test.png'.format(plots_path))
