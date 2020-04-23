@@ -1,34 +1,24 @@
 # caltech-ee148-spring2020-hw02
 
-### ./annotations 
+#### ./annotations: 
 directory containing the students' annotations
-
-### ./plots 
+#### ./plots: 
 directory containing plots of different PR curves
-
-### ./predictions
+#### ./predictions: 
 directory containing preds_train.json and preds_test.json
-
-### ./splits
+#### ./splits: 
 directory containing training data and test data splits
-
-### ./templates
+#### ./templates: 
 directory containing image kernels of red traffic lights
-
-### ./visualizations 
-directory containing visualizations of the successes and failures of the algorithm
-
-### ./WEAKENED_ALGORITHM 
+#### ./visualizations: 
+directory containing sample visualizations of the successes, failures, and heatmaps
+#### ./weakened_algorithm: 
 directory containing a weakened version of the algorithm 
-
-### run_predictions.py 
+#### run_predictions.py: 
 script for running best matched filtering algorithm to detect red traffic lights
-
-### run_visualizations.py
+#### run_visualizations.py: 
 script for producing visualizations
-
-### generate_split.py
+#### generate_split.py: 
 script for splitting training and testing data
-
-### eval_detector.py
+#### eval_detector.py: 
 script for computing precision, recall, and plotting PR curves
