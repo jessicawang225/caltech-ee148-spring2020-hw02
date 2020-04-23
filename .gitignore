@@ -3,3 +3,4 @@
 /visualizations/*
 !/visualizations/best/
 !/visualizations/worst/
+!/visualizations/heatmaps/
